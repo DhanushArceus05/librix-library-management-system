@@ -36,11 +36,11 @@ The platform provides secure authentication, role-based authorization, an intuit
 
 ### Frontend
 
-Coming Soon
+https://librix-library-management-system.vercel.app/
 
 ### Backend API
 
-Coming Soon
+https://librix-library-management-system.onrender.com/api/health
 
 ---
 
@@ -230,7 +230,7 @@ LibraryManagementSystem
 ## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/LibraryManagementSystem.git
+git clone https://github.com/DhanushArceus05/librix-library-management-system.git
 
 cd LibraryManagementSystem
 ```
@@ -362,7 +362,7 @@ backend/postman_collection.json
 GitHub
 
 ```
-https://github.com/YOUR_GITHUB_USERNAME
+https://github.com/DhanushArceus05
 ```
 
 LinkedIn

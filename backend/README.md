@@ -45,7 +45,7 @@ http://localhost:5000/api
 
 ## Production
 
-Coming Soon
+https://librix-library-management-system.onrender.com
 
 ---
 

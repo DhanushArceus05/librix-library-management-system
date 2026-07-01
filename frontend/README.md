@@ -37,7 +37,7 @@ with secure authentication, role-based navigation, book management, borrowing wo
 
 ## Frontend
 
-Coming Soon
+https://librix-library-management-system.vercel.app/
 
 ---
 
