@@ -1,0 +1,959 @@
+{
+  "info": {
+    "name": "Library Management System API",
+    "description": "Complete Postman collection for the Library Management System REST API.\n\n## Setup\n1. Import this collection into Postman\n2. Set the `baseUrl` variable to your server (default: http://localhost:5000/api)\n3. Run 'Register Member' or 'Login as Librarian' first — tokens auto-save to collection variables\n4. All protected endpoints use the saved `accessToken` automatically",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "library-management-system"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Root",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/../",
+              "host": ["{{baseUrl}}"],
+              "path": [".."]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Response has success true', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data.user.role).to.eql('member');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rohith Kumar\",\n  \"email\": \"rohith@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Success",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Registration successful. Please log in.\",\n  \"data\": {\n    \"user\": {\n      \"_id\": \"665a1b2c3d4e5f6a7b8c9d0e\",\n      \"name\": \"Rohith Kumar\",\n      \"email\": \"rohith@example.com\",\n      \"role\": \"member\",\n      \"createdAt\": \"2024-01-01T00:00:00.000Z\",\n      \"updatedAt\": \"2024-01-01T00:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "400 - Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed.\",\n  \"errors\": [\n    { \"field\": \"email\", \"message\": \"Please provide a valid email address.\" },\n    { \"field\": \"password\", \"message\": \"Password must be at least 6 characters long.\" }\n  ]\n}"
+            },
+            {
+              "name": "409 - Duplicate Email",
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"success\": false,\n  \"message\": \"An account with this email already exists.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register - Validation Error (missing fields)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"notanemail\",\n  \"password\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Try Librarian Role (should fail)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sneaky Admin\",\n  \"email\": \"sneaky@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"librarian\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    pm.collectionVariables.set('memberId', json.data.user._id);",
+                  "    console.log('Member tokens saved.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rohith@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful.\",\n  \"data\": {\n    \"user\": { \"_id\": \"...\", \"name\": \"Rohith Kumar\", \"email\": \"rohith@example.com\", \"role\": \"member\" },\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n  }\n}"
+            },
+            {
+              "name": "401 - Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid email or password.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login as Librarian",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    console.log('Librarian tokens saved.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"librarian@library.com\",\n  \"password\": \"librarian123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Wrong Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rohith@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    console.log('Tokens refreshed.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Access Protected Route Without Token (401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Books — Librarian",
+      "description": "Login as librarian before running these requests.",
+      "item": [
+        {
+          "name": "Add Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data && json.data.book) {",
+                  "    pm.collectionVariables.set('bookId', json.data.book._id);",
+                  "    console.log('Book ID saved:', json.data.book._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Code\",\n  \"author\": \"Robert C. Martin\",\n  \"isbn\": \"978-0132350884\",\n  \"category\": \"Programming\",\n  \"quantity\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Book Added",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Book added successfully.\",\n  \"data\": {\n    \"book\": {\n      \"_id\": \"665a1b2c3d4e5f6a7b8c9d0e\",\n      \"title\": \"Clean Code\",\n      \"author\": \"Robert C. Martin\",\n      \"isbn\": \"978-0132350884\",\n      \"category\": \"Programming\",\n      \"quantity\": 5,\n      \"availableQuantity\": 5,\n      \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "409 - Duplicate ISBN",
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"success\": false,\n  \"message\": \"A book with ISBN '978-0132350884' already exists.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Book - Second (for list testing)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Pragmatic Programmer\",\n  \"author\": \"Andrew Hunt\",\n  \"isbn\": \"978-0201616224\",\n  \"category\": \"Programming\",\n  \"quantity\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Book - Validation Error (missing fields)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Incomplete Book\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Book - Negative Quantity (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Bad Book\",\n  \"author\": \"Some Author\",\n  \"isbn\": \"999-9999999999\",\n  \"category\": \"Test\",\n  \"quantity\": -1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Books",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Books - With Pagination",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books?page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Books - Search by Title or Author",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books?search=clean",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [{ "key": "search", "value": "clean" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Books - Filter by Category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books?category=Programming",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [{ "key": "category", "value": "Programming" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Books - Search + Category + Pagination",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books?search=robert&category=Programming&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "search", "value": "robert" },
+                { "key": "category", "value": "Programming" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Book by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Book retrieved successfully.\",\n  \"data\": {\n    \"book\": {\n      \"_id\": \"665a1b2c3d4e5f6a7b8c9d0e\",\n      \"title\": \"Clean Code\",\n      \"author\": \"Robert C. Martin\",\n      \"isbn\": \"978-0132350884\",\n      \"category\": \"Programming\",\n      \"quantity\": 5,\n      \"availableQuantity\": 5\n    }\n  }\n}"
+            },
+            {
+              "name": "404 - Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Book not found.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Book by ID - Invalid ID (400)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books/not-a-valid-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "not-a-valid-id"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Book",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Code (Revised Edition)\",\n  \"quantity\": 8\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Updated",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Book updated successfully.\",\n  \"data\": {\n    \"book\": { \"_id\": \"...\", \"title\": \"Clean Code (Revised Edition)\", \"quantity\": 8, \"availableQuantity\": 8 }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Book",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Deleted",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Book deleted successfully.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Books — Member",
+      "description": "Login as member before running these requests.",
+      "item": [
+        {
+          "name": "Borrow Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json.success) {",
+                  "    console.log('Book borrowed. Status:', json.data.borrow.status);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}/borrow",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}", "borrow"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Borrowed",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Book borrowed successfully.\",\n  \"data\": {\n    \"borrow\": {\n      \"_id\": \"...\",\n      \"memberId\": { \"name\": \"Rohith Kumar\", \"email\": \"rohith@example.com\" },\n      \"bookId\": { \"title\": \"Clean Code\", \"author\": \"Robert C. Martin\", \"isbn\": \"978-0132350884\", \"category\": \"Programming\" },\n      \"borrowDate\": \"2024-01-15T10:00:00.000Z\",\n      \"returnDate\": null,\n      \"status\": \"borrowed\"\n    }\n  }\n}"
+            },
+            {
+              "name": "400 - Book Unavailable",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Book is currently unavailable.\"\n}"
+            },
+            {
+              "name": "400 - Already Borrowed",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"You have already borrowed this book. Please return it before borrowing again.\"\n}"
+            },
+            {
+              "name": "403 - Librarian Tries to Borrow",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. This action requires one of the following roles: member.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Borrow Book - Duplicate (400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}/borrow",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}", "borrow"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Return Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.success) {",
+                  "    console.log('Book returned. Status:', json.data.borrow.status);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}/return",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}", "return"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Returned",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Book returned successfully.\",\n  \"data\": {\n    \"borrow\": {\n      \"_id\": \"...\",\n      \"status\": \"returned\",\n      \"returnDate\": \"2024-01-20T10:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "400 - Not Borrowed",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"No active borrow record found. You have not borrowed this book or it has already been returned.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Return Book - Not Borrowed (400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}/return",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}", "return"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Members — Librarian",
+      "description": "Login as librarian before running these requests.",
+      "item": [
+        {
+          "name": "Get All Members",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["members"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Members retrieved successfully.\",\n  \"data\": {\n    \"members\": [\n      { \"_id\": \"...\", \"name\": \"Rohith Kumar\", \"email\": \"rohith@example.com\", \"role\": \"member\" }\n    ]\n  },\n  \"meta\": {\n    \"total\": 1,\n    \"page\": 1,\n    \"limit\": 10,\n    \"totalPages\": 1,\n    \"hasNextPage\": false,\n    \"hasPrevPage\": false\n  }\n}"
+            },
+            {
+              "name": "403 - Member Tries to Access",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. This action requires one of the following roles: librarian.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Members - With Pagination",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/members?page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["members"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Member",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/members/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "{{memberId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Deleted",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Member deleted successfully.\"\n}"
+            },
+            {
+              "name": "400 - Member Has Active Borrows",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cannot delete member. They have 1 book(s) currently borrowed.\"\n}"
+            },
+            {
+              "name": "404 - Member Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Member not found.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Member - Invalid ID (400)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/members/invalid-id-here",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "invalid-id-here"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Members — Self (Member)",
+      "description": "Login as member before running these requests.",
+      "item": [
+        {
+          "name": "My Borrowed Books",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/members/me/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "me", "books"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Borrowed books retrieved successfully.\",\n  \"data\": {\n    \"borrows\": [\n      {\n        \"_id\": \"...\",\n        \"bookId\": { \"title\": \"Clean Code\", \"author\": \"Robert C. Martin\", \"isbn\": \"978-0132350884\", \"category\": \"Programming\" },\n        \"borrowDate\": \"2024-01-15T10:00:00.000Z\",\n        \"returnDate\": null,\n        \"status\": \"borrowed\"\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "403 - Librarian Cannot Access",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. This action requires one of the following roles: member.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authorization Checks",
+      "description": "Verify role restrictions are enforced. Login as the WRONG role before each request.",
+      "item": [
+        {
+          "name": "Member Tries to Add Book (403)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Unauthorized Book\",\n  \"author\": \"No Access\",\n  \"isbn\": \"000-0000000000\",\n  \"category\": \"Test\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Member Tries to Delete Book (403)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Member Tries to Get Members (403)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["members"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Librarian Tries to Borrow Book (403)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}/borrow",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}", "borrow"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Librarian Tries to Return Book (403)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}/return",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}", "return"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Edge Cases",
+      "item": [
+        {
+          "name": "404 - Unknown Route",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/unknown-route",
+              "host": ["{{baseUrl}}"],
+              "path": ["unknown-route"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "401 - Expired / Invalid Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "this.is.not.valid", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
