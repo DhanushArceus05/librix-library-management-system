@@ -1,8 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
+  baseURL:
+    process.env.NODE_ENV === "development"
+      ? "/api"
+      : "https://librix-library-management-system.onrender.com/api",
+  headers: { "Content-Type": "application/json" },
 });
 
 // Attach access token to every request
